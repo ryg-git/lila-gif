@@ -4,7 +4,7 @@ use bytes::{BufMut, Bytes, BytesMut};
 use gift::{block, Encoder};
 use ndarray::{s, ArrayViewMut2};
 use rusttype::{Font, LayoutIter, Scale};
-use shakmaty::{uci::Uci, Bitboard, Board, File, Rank, Square};
+use shakmaty::{uci::Uci, Bitboard, Board, ByColor, ByRole, File, Rank, Square, Piece};
 
 use crate::{
     api::{Comment, Coordinates, Orientation, PlayerName, RequestBody, RequestParams},
@@ -41,7 +41,9 @@ struct RenderFrame {
     highlighted: Bitboard,
     checked: Bitboard,
     delay: Option<u16>,
+    pockets: Option<ByColor<ByRole<u8>>>,
 }
+
 
 impl RenderFrame {
     fn diff(&self, prev: &RenderFrame) -> Bitboard {
@@ -71,13 +73,15 @@ pub struct Render {
 }
 
 impl Render {
+    //
     pub fn new_image(themes: &'static Themes, params: RequestParams) -> Render {
         let bars = PlayerBars::from(params.white, params.black);
         let theme = themes.get(params.theme, params.piece);
+        let pockets = params.fen.as_setup().pockets;
         Render {
             theme,
             font: themes.font(),
-            buffer: vec![0; theme.height(bars.is_some()) * theme.width()],
+            buffer: vec![0; theme.height(bars.is_some(), pockets.is_some()) * theme.width()],
             state: RenderState::Preamble,
             comment: params.comment,
             bars,
@@ -88,6 +92,7 @@ impl Render {
                 checked: params.check.to_square(&params.fen.0).into_iter().collect(),
                 board: params.fen.0.board,
                 delay: None,
+                pockets,
             }]
             .into_iter(),
             kork: false,
@@ -98,10 +103,16 @@ impl Render {
         let bars = PlayerBars::from(params.white, params.black);
         let default_delay = params.delay;
         let theme = themes.get(params.theme, params.piece);
+        let pockets = if let Some(fr) = params.frames.first() {
+            fr.fen.as_setup().pockets
+        } else {
+            None
+        };
+
         Render {
             theme,
             font: themes.font(),
-            buffer: vec![0; theme.height(bars.is_some()) * theme.width()],
+            buffer: vec![0; theme.height(bars.is_some(), pockets.is_some()) * theme.width()],
             state: RenderState::Preamble,
             comment: params.comment,
             bars,
@@ -115,6 +126,7 @@ impl Render {
                     checked: frame.check.to_square(&frame.fen.0).into_iter().collect(),
                     board: frame.fen.0.board,
                     delay: Some(frame.delay.unwrap_or(default_delay)),
+                    pockets,
                 })
                 .collect::<Vec<_>>()
                 .into_iter(),
@@ -132,12 +144,18 @@ impl Iterator for Render {
             RenderState::Preamble => {
                 let mut blocks = Encoder::new(&mut output).into_block_enc();
 
+                let frame = self.frames.next().unwrap_or_default();
+
                 blocks.encode(block::Header::default()).expect("enc header");
 
                 blocks
                     .encode(
                         block::LogicalScreenDesc::default()
-                            .with_screen_height(self.theme.height(self.bars.is_some()) as u16)
+                            .with_screen_height(
+                                self.theme
+                                    .height(self.bars.is_some(), frame.pockets.is_some())
+                                    as u16,
+                            )
                             .with_screen_width(self.theme.width() as u16)
                             .with_color_table_config(self.theme.color_table_config()),
                     )
@@ -164,10 +182,28 @@ impl Iterator for Render {
                 }
 
                 let mut view = ArrayViewMut2::from_shape(
-                    (self.theme.height(self.bars.is_some()), self.theme.width()),
+                    (
+                        self.theme
+                            .height(self.bars.is_some(), frame.pockets.is_some()),
+                        self.theme.width(),
+                    ),
                     &mut self.buffer,
                 )
                 .expect("shape");
+
+                if let Some(pockets) = frame.pockets {
+                    render_ch_pockets(
+                        view.slice_mut(s!(..self.theme.square(), ..)),
+                        self.theme,
+                        pockets,
+                    );
+
+                    render_ch_pockets(
+                        view.slice_mut(s!((self.theme.square() + self.theme.width()).., ..)),
+                        self.theme,
+                        pockets,
+                    );
+                }
 
                 let mut board_view = if let Some(ref bars) = self.bars {
                     render_bar(
@@ -189,10 +225,13 @@ impl Iterator for Render {
                         ..
                     ))
                 } else {
-                    view
+                    let start = if frame.pockets.is_some() {
+                        self.theme.square()
+                    } else {
+                        0
+                    };
+                    view.slice_mut(s!(start..(start + self.theme.width()), ..))
                 };
-
-                let frame = self.frames.next().unwrap_or_default();
 
                 if let Some(delay) = frame.delay {
                     let mut ctrl = block::GraphicControl::default();
@@ -213,7 +252,11 @@ impl Iterator for Render {
                 blocks
                     .encode(
                         block::ImageDesc::default()
-                            .with_height(self.theme.height(self.bars.is_some()) as u16)
+                            .with_height(
+                                self.theme
+                                    .height(self.bars.is_some(), frame.pockets.is_some())
+                                    as u16,
+                            )
                             .with_width(self.theme.width() as u16),
                     )
                     .expect("enc image desc");
@@ -270,7 +313,7 @@ impl Iterator for Render {
 
                     self.state = RenderState::Frame(frame);
                 } else {
-                    // Add a black frame at the end, to work around twitter
+                    // Add a black frame at the end, to work around x (formerly twitter)
                     // cutting off the last frame.
                     if self.kork {
                         let mut ctrl = block::GraphicControl::default();
@@ -279,7 +322,9 @@ impl Iterator for Render {
                         ctrl.set_delay_time_cs(1);
                         blocks.encode(ctrl).expect("enc graphic control");
 
-                        let height = self.theme.height(self.bars.is_some());
+                        let height = self
+                            .theme
+                            .height(self.bars.is_some(), prev.pockets.is_some());
                         let width = self.theme.width();
                         blocks
                             .encode(
@@ -524,6 +569,21 @@ fn render_coord(
             });
         };
     }
+}
+
+fn render_ch_pockets(mut view: ArrayViewMut2<u8>, theme: &Theme, pockets: ByColor<ByRole<u8>>) {
+    view.fill(theme.transparent_color());
+
+    let key = SpriteKey {
+        piece: Piece::from_char('N'),
+        dark_square: true,
+        highlight: false,
+        check: false,
+    };
+
+    let mut square_buffer = view.slice_mut(s!(..theme.square(), 20..(20 + theme.square())));
+
+    square_buffer.assign(&theme.sprite(&key));
 }
 
 fn get_square_background_color(is_highlighted: bool, is_dark: bool, theme: &Theme) -> u8 {

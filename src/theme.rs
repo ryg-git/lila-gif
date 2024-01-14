@@ -39,6 +39,7 @@ pub struct Theme {
 
 impl Theme {
     fn new(sprite_data: &[u8]) -> Theme {
+        // println!("sprite data {:#?}", sprite_data);
         let mut decoder = gift::Decoder::new(std::io::Cursor::new(sprite_data)).into_frames();
         let preamble = decoder
             .preamble()
@@ -93,6 +94,7 @@ impl Theme {
     }
 
     pub fn width(&self) -> usize {
+        // self.square() * 8 + self.square() * 2
         self.square() * 8
     }
 
@@ -116,12 +118,17 @@ impl Theme {
         60
     }
 
-    pub fn height(&self, bars: bool) -> usize {
-        if bars {
+    pub fn height(&self, bars: bool, pockets: bool) -> usize {
+        let p = if pockets { 2 * self.square() } else { 0 };
+
+        let b = if bars {
             self.width() + 2 * self.bar_height()
         } else {
+            // self.width() + self.width() / 4
+            // self.width() + 180
             self.width()
-        }
+        };
+        p + b
     }
 
     pub fn sprite(&self, key: &SpriteKey) -> ArrayView2<u8> {
