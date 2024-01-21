@@ -71,6 +71,77 @@ def resvg(path):
     res = subprocess.run(
         ["resvg", path, "-c", "-w", "90"],
         stdout=subprocess.PIPE,
+# Ensure that the ids of all elements are unique by prefixing with the name of the piece
+# Can be done with SVGO prefixIds instead
+def namespace_ids(element: ET.Element, piece: str):
+    prefix = piece + "-"
+    if element.get("id"):
+        element.set("id", prefix + element.get("id"))
+    for key, value in element.attrib.items():
+        id_index = value.find("url(#")
+        if id_index >= 0:
+            element.set(key, value[0 : id_index + 5] + prefix + value[id_index + 5 :])
+        elif key.endswith("href") and value.startswith("#"):
+            element.set(key, "#" + prefix + element.get(key)[1:])
+    for child in element:
+        namespace_ids(child, piece)
+
+
+# Ensure that the class names of all elements are unique by prefixing with the name of the piece
+# Can be done with SVGO prefixIds instead
+def namespace_classnames(element: ET.Element, piece: str):
+    prefix = piece + "-"
+    if element.get("class"):
+        element.set(
+            "class",
+            " ".join(
+                [prefix + classname for classname in element.get("class").split(" ")]
+            ),
+        )
+    # For any style tags like:
+    # <style>.st0{fill:none}.st1{fill:#010101}.st2{fill:#6d6e6e}</style>
+    # Include a piece prefix in front of every class name:
+    # <style>.bB-st0{fill:none}.bB-st1{fill:#010101}.bB-st2{fill:#6d6e6e}</style>
+    if element.tag.endswith("style"):
+        element.text = re.sub(r"\.(.*?)\{", r"." + prefix + r"\1{", element.text)
+    for child in element:
+        namespace_classnames(child, piece)
+
+
+piece_sets = {}
+
+
+def make_piece_set(piece_set_name: str):
+    if piece_sets.get(piece_set_name):
+        return piece_sets[piece_set_name]
+
+    piece_set = []
+    for piece in PIECES:
+        svg = ET.parse(f"piece/{piece_set_name}/{piece}.svg")
+
+        root = svg.getroot()
+        resize_svg_root(root)
+
+        # TODO: run SVGO with the prefixIds plugin on all SVGs so we don't have to do the following
+        namespace_ids(root, piece)
+        namespace_classnames(root, piece)
+
+        root.attrib["id"] = piece
+        piece_set.append(ET.tostring(root, "utf8", method="xml"))
+
+    piece_sets[piece_set_name] = piece_set
+    return piece_set
+
+
+def make_sprite(theme_name: str, piece_set_name: str):
+    svg = ET.Element(
+        "svg",
+        {
+            "xmlns": "http://www.w3.org/2000/svg",
+            "version": "1.1",
+            "xmlns:xlink": "http://www.w3.org/1999/xlink",
+            "viewBox": f"0 0 {SQUARE_SIZE * 8} {SQUARE_SIZE * 9}",
+        },
     )
 
     return Image.open(io.BytesIO(res.stdout), formats=["PNG"])
@@ -105,6 +176,38 @@ def make_sprite(light, dark, pieces, check_gradient):
 
     image = image.convert("RGBA")
     draw = ImageDraw.Draw(image, "RGBA")
+    for x in range(8):
+        ET.SubElement(
+            svg,
+            "rect",
+            {
+                "x": str(SQUARE_SIZE * x),
+                "y": str(SQUARE_SIZE * 8),
+                "width": str(SQUARE_SIZE),
+                "height": str(SQUARE_SIZE),
+                "stroke": "none",
+                "fill": "#888888",
+            },
+        )
+
+        color = "w" if x >= 4 else "b"
+        
+        ET.SubElement(
+            svg,
+            "use",
+            {
+                "xlink:href": f"#{color}{PIECE_TYPES[min(x, 6) - 1]}",
+                "transform": f"translate({SQUARE_SIZE * x}, {SQUARE_SIZE * 8})",
+                "opacity": "0.3",
+            },
+        )
+
+    resvg = subprocess.run(
+        "resvg --resources-dir . --zoom 2 - -c",
+        shell=True,
+        input=ET.tostring(svg),
+        capture_output=True,
+    )
 
     for i, color in enumerate(NONTHEME_COLORS):
         width = 4 * SQUARE_SIZE / len(NONTHEME_COLORS)
