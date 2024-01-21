@@ -140,7 +140,7 @@ def make_sprite(theme_name: str, piece_set_name: str):
             "xmlns": "http://www.w3.org/2000/svg",
             "version": "1.1",
             "xmlns:xlink": "http://www.w3.org/1999/xlink",
-            "viewBox": f"0 0 {SQUARE_SIZE * 8} {SQUARE_SIZE * 8}",
+            "viewBox": f"0 0 {SQUARE_SIZE * 8} {SQUARE_SIZE * 9}",
         },
     )
 
@@ -209,6 +209,32 @@ def make_sprite(theme_name: str, piece_set_name: str):
                     "transform": f"translate({SQUARE_SIZE * x}, {SQUARE_SIZE * y})",
                 },
             )
+
+    for x in range(8):
+        ET.SubElement(
+            svg,
+            "rect",
+            {
+                "x": str(SQUARE_SIZE * x),
+                "y": str(SQUARE_SIZE * 8),
+                "width": str(SQUARE_SIZE),
+                "height": str(SQUARE_SIZE),
+                "stroke": "none",
+                "fill": "#888888",
+            },
+        )
+
+        color = "w" if x >= 4 else "b"
+        
+        ET.SubElement(
+            svg,
+            "use",
+            {
+                "xlink:href": f"#{color}{PIECE_TYPES[min(x, 6) - 1]}",
+                "transform": f"translate({SQUARE_SIZE * x}, {SQUARE_SIZE * 8})",
+                "opacity": "0.3",
+            },
+        )
 
     resvg = subprocess.run(
         "resvg --resources-dir . --zoom 2 - -c",
