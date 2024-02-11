@@ -224,6 +224,16 @@ def main():
         for piece_set, pieces in piece_sets.items():
             image = make_sprite(light=light, dark=dark, pieces=pieces, check_gradient=check_gradient)
             image.save(f"sprites/{board_theme}-{piece_set}.gif", optimize=True, interlace=False, transparency=image.getpixel((SQUARE_SIZE * 8 - 1, 0)))
+def make_crazyhouse_sprite(piece_set_name):
+    from ch import make_ch_sprite
+    make_ch_sprite(piece_set_name)
+
+def make_all_sprites():
+    for piece_set_name in get_piece_set_names():
+        for theme_name in THEMES.keys():
+            make_sprite(theme_name, piece_set_name)
+
+        make_crazyhouse_sprite(piece_set_name)
 
 
 if __name__ == "__main__":
