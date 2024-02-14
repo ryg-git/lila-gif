@@ -43,6 +43,7 @@ THEMES = {
     "ic": include_highlight_colors({"light": "#ececec", "dark": "#c1c18e"}),
     "pink": include_highlight_colors({"light": "#f1f1c9", "dark": "#f07272"}),
     "purple": include_highlight_colors({"light": "#9f90b0", "dark": "#7d4a8d"}),
+    "crazyhouse": include_highlight_colors({"light": "#888888", "dark": "#888888"}),
 }
 
 
@@ -210,32 +211,6 @@ def make_sprite(theme_name: str, piece_set_name: str):
                 },
             )
 
-    for x in range(8):
-        ET.SubElement(
-            svg,
-            "rect",
-            {
-                "x": str(SQUARE_SIZE * x),
-                "y": str(SQUARE_SIZE * 8),
-                "width": str(SQUARE_SIZE),
-                "height": str(SQUARE_SIZE),
-                "stroke": "none",
-                "fill": "#888888",
-            },
-        )
-
-        color = "w" if x >= 4 else "b"
-        
-        ET.SubElement(
-            svg,
-            "use",
-            {
-                "xlink:href": f"#{color}{PIECE_TYPES[min(x, 6) - 1]}",
-                "transform": f"translate({SQUARE_SIZE * x}, {SQUARE_SIZE * 8})",
-                "opacity": "0.3",
-            },
-        )
-
     resvg = subprocess.run(
         "resvg --resources-dir . --zoom 2 - -c",
         shell=True,
@@ -255,11 +230,13 @@ def make_crazyhouse_sprite(piece_set_name):
     make_ch_sprite(piece_set_name)
 
 def make_all_sprites():
-    for piece_set_name in get_piece_set_names():
-        for theme_name in THEMES.keys():
-            make_sprite(theme_name, piece_set_name)
+    for theme_name in THEMES.keys():
+        for piece_set_name in get_piece_set_names():
+            if theme_name == "crazyhouse":
+                make_crazyhouse_sprite(piece_set_name)
+            else:
+                make_sprite(theme_name, piece_set_name)
 
-        make_crazyhouse_sprite(piece_set_name)
 
 
 if __name__ == "__main__":
