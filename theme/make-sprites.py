@@ -16,6 +16,17 @@ BOARD_THEMES = {
     "ic":     ("#ececec", "#c1c18e"),
     "pink":   ("#f1f1c9", "#f07272"),
     "purple": ("#9f90b0", "#7d4a8d"),
+# Board theme SVGs are stored in lila:
+# https://github.com/lichess-org/lila/tree/master/public/images/board/svg
+# All that is relevant are the light and dark square colors, which are copied/pasted here.
+THEMES = {
+    "blue": include_highlight_colors({"light": "#dee3e6", "dark": "#8ca2ad"}),
+    "brown": include_highlight_colors({"light": "#f0d9b5", "dark": "#b58863"}),
+    "green": include_highlight_colors({"light": "#ffffdd", "dark": "#86a666"}),
+    "ic": include_highlight_colors({"light": "#ececec", "dark": "#c1c18e"}),
+    "pink": include_highlight_colors({"light": "#f1f1c9", "dark": "#f07272"}),
+    "purple": include_highlight_colors({"light": "#9f90b0", "dark": "#7d4a8d"}),
+    "crazyhouse": include_highlight_colors({"light": "#888888", "dark": "#888888"}),
 }
 
 PIECE_SETS = [
@@ -229,11 +240,13 @@ def make_crazyhouse_sprite(piece_set_name):
     make_ch_sprite(piece_set_name)
 
 def make_all_sprites():
-    for piece_set_name in get_piece_set_names():
-        for theme_name in THEMES.keys():
-            make_sprite(theme_name, piece_set_name)
+    for theme_name in THEMES.keys():
+        for piece_set_name in get_piece_set_names():
+            if theme_name == "crazyhouse":
+                make_crazyhouse_sprite(piece_set_name)
+            else:
+                make_sprite(theme_name, piece_set_name)
 
-        make_crazyhouse_sprite(piece_set_name)
 
 
 if __name__ == "__main__":
