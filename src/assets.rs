@@ -370,6 +370,50 @@ pub fn sprite_data(board: BoardTheme, pieces: PieceSet) -> &'static [u8] {
     }
 }
 
+
+pub fn ch_sprite_data(pieces: PieceSet) -> &'static [u8] {
+    use PieceSet::*;
+    match pieces {
+        Alpha => include_bytes!("../theme/sprites/crazyhouse-alpha.gif"),
+        Anarcandy => include_bytes!("../theme/sprites/crazyhouse-anarcandy.gif"),
+        Caliente => include_bytes!("../theme/sprites/crazyhouse-caliente.gif"),
+        California => include_bytes!("../theme/sprites/crazyhouse-california.gif"),
+        Cardinal => include_bytes!("../theme/sprites/crazyhouse-cardinal.gif"),
+        Cburnett => include_bytes!("../theme/sprites/crazyhouse-cburnett.gif"),
+        Celtic => include_bytes!("../theme/sprites/crazyhouse-celtic.gif"),
+        Chess7 => include_bytes!("../theme/sprites/crazyhouse-chess7.gif"),
+        Chessnut => include_bytes!("../theme/sprites/crazyhouse-chessnut.gif"),
+        Companion => include_bytes!("../theme/sprites/crazyhouse-companion.gif"),
+        Dubrovny => include_bytes!("../theme/sprites/crazyhouse-dubrovny.gif"),
+        Disguised => include_bytes!("../theme/sprites/crazyhouse-disguised.gif"),
+        Fantasy => include_bytes!("../theme/sprites/crazyhouse-fantasy.gif"),
+        Fresca => include_bytes!("../theme/sprites/crazyhouse-fresca.gif"),
+        Gioco => include_bytes!("../theme/sprites/crazyhouse-gioco.gif"),
+        Governor => include_bytes!("../theme/sprites/crazyhouse-governor.gif"),
+        Horsey => include_bytes!("../theme/sprites/crazyhouse-horsey.gif"),
+        IcPieces => include_bytes!("../theme/sprites/crazyhouse-icpieces.gif"),
+        KiwenSuwi => include_bytes!("../theme/sprites/crazyhouse-kiwen-suwi.gif"),
+        Kosal => include_bytes!("../theme/sprites/crazyhouse-kosal.gif"),
+        Leipzig => include_bytes!("../theme/sprites/crazyhouse-leipzig.gif"),
+        Letter => include_bytes!("../theme/sprites/crazyhouse-letter.gif"),
+        Libra => include_bytes!("../theme/sprites/crazyhouse-libra.gif"),
+        Maestro => include_bytes!("../theme/sprites/crazyhouse-maestro.gif"),
+        Merida => include_bytes!("../theme/sprites/crazyhouse-merida.gif"),
+        Mpchess => include_bytes!("../theme/sprites/crazyhouse-mpchess.gif"),
+        Pirouetti => include_bytes!("../theme/sprites/crazyhouse-pirouetti.gif"),
+        Pixel => include_bytes!("../theme/sprites/crazyhouse-pixel.gif"),
+        ReillyCraig => include_bytes!("../theme/sprites/crazyhouse-reillycraig.gif"),
+        Riohacha => include_bytes!("../theme/sprites/crazyhouse-riohacha.gif"),
+        Shapes => include_bytes!("../theme/sprites/crazyhouse-shapes.gif"),
+        Spatial => include_bytes!("../theme/sprites/crazyhouse-spatial.gif"),
+        Staunty => include_bytes!("../theme/sprites/crazyhouse-staunty.gif"),
+        Tatiana => include_bytes!("../theme/sprites/crazyhouse-tatiana.gif"),
+    }
+}
+
+
+
+
 #[cfg(test)]
 mod tests {
     use std::convert::identity;
