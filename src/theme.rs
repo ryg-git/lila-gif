@@ -3,9 +3,10 @@ use ndarray::{s, Array2, ArrayView2};
 use rusttype::Font;
 use shakmaty::{Piece, Role};
 
-use crate::assets::{sprite_data, BoardTheme, ByBoardTheme, ByPieceSet, PieceSet};
+use crate::assets::{ch_sprite_data, sprite_data, BoardTheme, ByBoardTheme, ByPieceSet, PieceSet};
 
 const SQUARE: usize = 90;
+const POCKET_MARGIN: usize = 10;
 const COLOR_WIDTH: usize = 90 * 2 / 3;
 
 pub struct SpriteKey {
@@ -28,6 +29,21 @@ impl SpriteKey {
             Some(piece) => piece.role as usize,
             None => 0,
         }
+    }
+}
+
+pub struct PocketKey {
+    pub piece: Option<Piece>,
+    pub count: u8,
+}
+
+impl PocketKey {
+    fn x(&self) -> usize {
+        4
+    }
+
+    fn y(&self) -> usize {
+        6
     }
 }
 
@@ -93,6 +109,10 @@ impl Theme {
         SQUARE
     }
 
+    pub fn pocket_margin(&self) -> usize {
+        POCKET_MARGIN
+    }
+
     pub fn width(&self) -> usize {
         // self.square() * 8 + self.square() * 2
         self.square() * 8
@@ -119,19 +139,31 @@ impl Theme {
     }
 
     pub fn height(&self, bars: bool, pockets: bool) -> usize {
-        let p = if pockets { 2 * self.square() } else { 0 };
+        let pockets = if pockets {
+            2 * (self.square() + 2 * self.pocket_margin())
+        } else {
+            0
+        };
 
-        let b = if bars {
+        let bars = if bars {
             self.width() + 2 * self.bar_height()
         } else {
-            // self.width() + self.width() / 4
-            // self.width() + 180
             self.width()
         };
-        p + b
+
+        pockets + bars
     }
 
     pub fn sprite(&self, key: &SpriteKey) -> ArrayView2<u8> {
+        let y = key.y();
+        let x = key.x();
+        self.sprite.slice(s!(
+            (SQUARE * y)..(SQUARE + SQUARE * y),
+            (SQUARE * x)..(SQUARE + SQUARE * x)
+        ))
+    }
+
+    pub fn chsprite(&self, key: &PocketKey) -> ArrayView2<u8> {
         let y = key.y();
         let x = key.x();
         self.sprite.slice(s!(
@@ -143,6 +175,7 @@ impl Theme {
 
 pub struct Themes {
     map: ByBoardTheme<ByPieceSet<Theme>>,
+    mapch: ByPieceSet<Theme>,
     font: Font<'static>,
 }
 
@@ -155,6 +188,7 @@ impl Themes {
             map: ByBoardTheme::new(|board| {
                 ByPieceSet::new(|pieces| Theme::new(sprite_data(board, pieces)))
             }),
+            mapch: ByPieceSet::new(|pieces| Theme::new(ch_sprite_data(pieces))),
             font,
         }
     }
@@ -165,5 +199,9 @@ impl Themes {
 
     pub fn get(&self, board: BoardTheme, pieces: PieceSet) -> &Theme {
         self.map.by_board_theme(board).by_piece_set(pieces)
+    }
+
+    pub fn get_ch(&self, pieces: PieceSet) -> &Theme {
+        self.mapch.by_piece_set(pieces)
     }
 }
