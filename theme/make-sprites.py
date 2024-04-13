@@ -151,7 +151,7 @@ def make_sprite(theme_name: str, piece_set_name: str):
             "xmlns": "http://www.w3.org/2000/svg",
             "version": "1.1",
             "xmlns:xlink": "http://www.w3.org/1999/xlink",
-            "viewBox": f"0 0 {SQUARE_SIZE * 8} {SQUARE_SIZE * 9}",
+            "viewBox": f"0 0 {SQUARE_SIZE * 8} {SQUARE_SIZE * 8}",
         },
     )
 
