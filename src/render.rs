@@ -4,11 +4,11 @@ use bytes::{BufMut, Bytes, BytesMut};
 use gift::{block, Encoder};
 use ndarray::{s, ArrayViewMut2};
 use rusttype::{Font, LayoutIter, Scale};
-use shakmaty::{uci::Uci, Bitboard, Board, ByColor, ByRole, File, Rank, Square, Piece};
+use shakmaty::{uci::Uci, Bitboard, Board, ByColor, ByRole, File, Piece, Rank, Square};
 
 use crate::{
     api::{Comment, Coordinates, Orientation, PlayerName, RequestBody, RequestParams},
-    theme::{SpriteKey, Theme, Themes},
+    theme::{PocketKey, SpriteKey, Theme, Themes},
 };
 
 enum RenderState {
@@ -61,6 +61,7 @@ impl RenderFrame {
 
 pub struct Render {
     theme: &'static Theme,
+    chtheme: &'static Theme,
     font: &'static Font<'static>,
     state: RenderState,
     buffer: Vec<u8>,
@@ -77,9 +78,11 @@ impl Render {
     pub fn new_image(themes: &'static Themes, params: RequestParams) -> Render {
         let bars = PlayerBars::from(params.white, params.black);
         let theme = themes.get(params.theme, params.piece);
+        let chtheme = themes.get_ch(params.piece);
         let pockets = params.fen.as_setup().pockets;
         Render {
             theme,
+            chtheme,
             font: themes.font(),
             buffer: vec![0; theme.height(bars.is_some(), pockets.is_some()) * theme.width()],
             state: RenderState::Preamble,
@@ -103,6 +106,7 @@ impl Render {
         let bars = PlayerBars::from(params.white, params.black);
         let default_delay = params.delay;
         let theme = themes.get(params.theme, params.piece);
+        let chtheme = themes.get_ch(params.piece);
         let pockets = if let Some(fr) = params.frames.first() {
             fr.fen.as_setup().pockets
         } else {
@@ -111,6 +115,7 @@ impl Render {
 
         Render {
             theme,
+            chtheme,
             font: themes.font(),
             buffer: vec![0; theme.height(bars.is_some(), pockets.is_some()) * theme.width()],
             state: RenderState::Preamble,
@@ -191,16 +196,27 @@ impl Iterator for Render {
                 )
                 .expect("shape");
 
+                //
                 if let Some(pockets) = frame.pockets {
                     render_ch_pockets(
-                        view.slice_mut(s!(..self.theme.square(), ..)),
+                        view.slice_mut(s!(
+                            ..(self.theme.square() + 2 * self.theme.pocket_margin()),
+                            ..
+                        )),
                         self.theme,
+                        self.chtheme,
                         pockets,
                     );
 
                     render_ch_pockets(
-                        view.slice_mut(s!((self.theme.square() + self.theme.width()).., ..)),
+                        view.slice_mut(s!(
+                            (self.theme.square()
+                                + 2 * self.theme.pocket_margin()
+                                + self.theme.width())..,
+                            ..
+                        )),
                         self.theme,
+                        self.chtheme,
                         pockets,
                     );
                 }
@@ -226,7 +242,7 @@ impl Iterator for Render {
                     ))
                 } else {
                     let start = if frame.pockets.is_some() {
-                        self.theme.square()
+                        self.theme.square() + 2 * self.theme.pocket_margin()
                     } else {
                         0
                     };
@@ -571,19 +587,27 @@ fn render_coord(
     }
 }
 
-fn render_ch_pockets(mut view: ArrayViewMut2<u8>, theme: &Theme, pockets: ByColor<ByRole<u8>>) {
+fn render_ch_pockets(
+    mut view: ArrayViewMut2<u8>,
+    theme: &Theme,
+    chtheme: &Theme,
+    pockets: ByColor<ByRole<u8>>,
+) {
     view.fill(theme.transparent_color());
 
-    let key = SpriteKey {
-        piece: Piece::from_char('N'),
-        dark_square: true,
-        highlight: false,
-        check: false,
+    let key = PocketKey {
+        piece: Piece::from_char('B'),
+        count: 1,
     };
 
-    let mut square_buffer = view.slice_mut(s!(..theme.square(), 20..(20 + theme.square())));
+    let mut square_buffer = view.slice_mut(s!(
+        theme.pocket_margin()..(theme.square() + theme.pocket_margin()),
+        (2 * theme.square())..(2 * theme.square() + theme.square())
+    ));
 
-    square_buffer.assign(&theme.sprite(&key));
+    square_buffer.fill(theme.transparent_color());
+
+    square_buffer.assign(&chtheme.chsprite(&key));
 }
 
 fn get_square_background_color(is_highlighted: bool, is_dark: bool, theme: &Theme) -> u8 {
