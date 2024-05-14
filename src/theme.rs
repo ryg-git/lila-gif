@@ -39,7 +39,7 @@ pub struct PocketKey {
 
 impl PocketKey {
     fn x(&self) -> usize {
-        4
+        1
     }
 
     fn y(&self) -> usize {
@@ -51,6 +51,7 @@ pub struct Theme {
     color_table_config: ColorTableConfig,
     global_color_table: GlobalColorTable,
     sprite: Array2<u8>,
+    // chsprite: Array2<u8>,
 }
 
 impl Theme {
@@ -70,6 +71,25 @@ impl Theme {
             color_table_config: preamble.logical_screen_desc.color_table_config(),
             global_color_table: preamble.global_color_table.expect("color table present"),
             sprite,
+        }
+    }
+
+    fn new_ch(sprite_data: &[u8]) -> Theme {
+        // println!("sprite data {:#?}", sprite_data);
+        let mut chdecoder = gift::Decoder::new(std::io::Cursor::new(sprite_data)).into_frames();
+        let chpreamble = chdecoder
+            .preamble()
+            .expect("decode preamble")
+            .expect("preamble");
+        let chframe = chdecoder.next().expect("frame").expect("decode frame");
+        let chsprite =
+            Array2::from_shape_vec((SQUARE * 8, SQUARE * 8), chframe.image_data.data().to_owned())
+                .expect("from ch shape");
+
+        Theme {
+            color_table_config: chpreamble.logical_screen_desc.color_table_config(),
+            global_color_table: chpreamble.global_color_table.expect("color table present"),
+            sprite: chsprite,
         }
     }
 
