@@ -239,6 +239,10 @@ def make_crazyhouse_sprite(piece_set_name):
     from ch import make_ch_sprite
     make_ch_sprite(piece_set_name)
 
+def make_crazyhouse_sprite(piece_set_name):
+    from ch import make_ch_sprite
+    make_ch_sprite(piece_set_name)
+
 def make_all_sprites():
     for theme_name in THEMES.keys():
         for piece_set_name in get_piece_set_names():
