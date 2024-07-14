@@ -200,7 +200,7 @@ impl Iterator for Render {
                 if let Some(pockets) = frame.pockets {
                     render_ch_pockets(
                         view.slice_mut(s!(
-                            ..(self.theme.square() + 2 * self.theme.pocket_margin()),
+                            ..(self.chtheme.square() + 2 * self.chtheme.pocket_margin()),
                             ..
                         )),
                         self.theme,
