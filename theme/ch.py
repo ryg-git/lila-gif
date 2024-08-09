@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
 from chess.svg import SQUARE_SIZE
-from PIL import Image
 
 import io
 import subprocess
+from PIL import Image, ImageDraw
 import xml.etree.ElementTree as ET
 import importlib
 
@@ -18,204 +18,72 @@ NONTHEME_COLORS = [
     "#706f6e",  # 50% text color on dark background
 ]
 
+PIECE_SETS = [
+    "alpha",
+    "anarcandy",
+    "caliente",
+    "california",
+    "cardinal",
+    "cburnett",
+    "celtic",
+    "chess7",
+    "chessnut",
+    "cooke",
+    "companion",
+    "disguised",
+    "dubrovny",
+    "fantasy",
+    "fresca",
+    "gioco",
+    "governor",
+    "horsey",
+    "icpieces",
+    "kiwen-suwi",
+    "kosal",
+    "leipzig",
+    "letter",
+    "libra",
+    "maestro",
+    "merida",
+    "monarchy",
+    "mpchess",
+    "pirouetti",
+    "pixel",
+    "reillycraig",
+    "riohacha",
+    "shapes",
+    "spatial",
+    "staunty",
+    "tatiana",
+]
+
 COLOR_WIDTH = SQUARE_SIZE * 2 // 3
 
+def resvg(path):
+    res = subprocess.run(
+        ["resvg", path, "-c", "-w", "90"],
+        stdout=subprocess.PIPE,
+    )
+
+    return Image.open(io.BytesIO(res.stdout), formats=["PNG"])
+
+def resvg_pieces(piece_set):
+    print(f"Preparing {piece_set} pieces...")
+    return {f"{color}{piece}": resvg(f"piece/{piece_set}/{color}{piece}.svg") for color in "wb" for piece in "PNBRQK"}
+
 def make_ch_sprite(piece_set_name: str):
-    svg = ET.Element(
-        "svg",
-        {
-            "xmlns": "http://www.w3.org/2000/svg",
-            "version": "1.1",
-            "xmlns:xlink": "http://www.w3.org/1999/xlink",
-            "viewBox": f"0 0 {SQUARE_SIZE * 8} {SQUARE_SIZE * 9}",
-        },
-    )
-
-    defs = ET.SubElement(svg, "defs")
-
-    for g in ms.make_piece_set(piece_set_name):
-        defs.append(ET.fromstring(g))
-
-
-    for x, color in enumerate(NONTHEME_COLORS):
-        ET.SubElement(
-            svg,
-            "rect",
-            {
-                "x": str(SQUARE_SIZE * 4 + COLOR_WIDTH * x),
-                "y": "0",
-                "width": str(COLOR_WIDTH),
-                "height": str(SQUARE_SIZE),
-                "stroke": "none",
-                "fill": color,
-            },
-        )
-
-
-    ET.SubElement(
-        svg,
-        "rect",
-        {
-            "x": "0",
-            "y": "0",
-            "width": str(SQUARE_SIZE * 4),
-            "height": str(SQUARE_SIZE),
-            "stroke": "none",
-            "fill": "#888888",
-        },
-    )
-
+    image = Image.new("RGB", (8 * SQUARE_SIZE, 8 * SQUARE_SIZE))
+    draw = ImageDraw.Draw(image, "RGBA")
 
     for y in range(2, 6):
         for x in range(8):
-            ET.SubElement(
-                svg,
-                "rect",
-                {
-                    "x": str(SQUARE_SIZE * x),
-                    "y": str(SQUARE_SIZE * y),
-                    "width": str(SQUARE_SIZE),
-                    "height": str(SQUARE_SIZE),
-                    "stroke": "none",
-                    "fill": "#888888",
-                },
-            )
+            rect = (x * SQUARE_SIZE, 0, (x + 1) * SQUARE_SIZE - 1, SQUARE_SIZE * 8 - 1)
+            draw.rectangle(rect, fill=NONTHEME_COLORS[0])
 
-            color = "w" if x >= 4 else "b"
 
-            if y == 0:
-                ET.SubElement(
-                    svg,
-                    "use",
-                    {
-                        "xlink:href": f"#{color}{ms.PIECE_TYPES[1 + x % 4]}",
-                        "transform": f"translate({SQUARE_SIZE * x}, 0)",
-                        "opacity": "0.1",
-                    },
-                )
-
-            else:
-                ET.SubElement(
-                    svg,
-                    "use",
-                    {
-                        "xlink:href": f"#{color}{ms.PIECE_TYPES[1 + x % 4]}",
-                        "transform": f"translate({SQUARE_SIZE * x}, {SQUARE_SIZE * y})",
-                    },
-                )
-
-                ET.SubElement(
-                    svg,
-                    "image",
-                    {
-                        "xlink:href": f"ch-numbers/ch{y - 1}.png",
-                        "transform": f"translate({SQUARE_SIZE * (x + 0.60)}, {SQUARE_SIZE * (y + 0.60)})",
-                        "width": "15",
-                        "height": "15"
-                    },
-                )
-
-    for x in range(8):
-        ET.SubElement(
-            svg,
-            "rect",
-            {
-                "x": str(SQUARE_SIZE * x),
-                "y": str(SQUARE_SIZE),
-                "width": str(SQUARE_SIZE),
-                "height": str(SQUARE_SIZE),
-                "stroke": "none",
-                "fill": "#888888",
-            },
-        )
-
-        color = "w" if x >= 4 else "b"
-
-        ET.SubElement(
-            svg,
-            "use",
-            {
-                "xlink:href": f"#{color}{ms.PIECE_TYPES[1 + x % 4]}",
-                "transform": f"translate({SQUARE_SIZE * x}, {SQUARE_SIZE})",
-                "opacity": "0.1",
-            },
-        )
-
-    for x in range(8):
-        ET.SubElement(
-            svg,
-            "rect",
-            {
-                "x": str(SQUARE_SIZE * x),
-                "y": str(SQUARE_SIZE * 6),
-                "width": str(SQUARE_SIZE),
-                "height": str(SQUARE_SIZE),
-                "stroke": "none",
-                "fill": "#888888",
-            },
-        )
-
-        color = "w" if x >= 4 else "b"
-
-        ET.SubElement(
-            svg,
-            "use",
-            {
-                "xlink:href": f"#{color}{ms.PIECE_TYPES[0]}",
-                "transform": f"translate({SQUARE_SIZE * x}, {SQUARE_SIZE * 6})",
-                "opacity": "0.1",
-            },
-        )
-
-    for y in range(7, 9):
-        for x in range(8):
-            ET.SubElement(
-                svg,
-                "rect",
-                {
-                    "x": str(SQUARE_SIZE * x),
-                    "y": str(SQUARE_SIZE * y),
-                    "width": str(SQUARE_SIZE),
-                    "height": str(SQUARE_SIZE),
-                    "stroke": "none",
-                    "fill": "#888888",
-                },
-            )
-
-            color = "w" if y == 8 else "b"
-
-            ET.SubElement(
-                svg,
-                "use",
-                {
-                    "xlink:href": f"#{color}{ms.PIECE_TYPES[0]}",
-                    "transform": f"translate({SQUARE_SIZE * x}, {SQUARE_SIZE * y})",
-                },
-            )
-
-            ET.SubElement(
-                svg,
-                "image",
-                {
-                    "xlink:href": f"ch-numbers/ch{x + 1}.png",
-                    "transform": f"translate({SQUARE_SIZE * (x + 0.60)}, {SQUARE_SIZE * (y + 0.60)})",
-                    "width": "15",
-                    "height": "15"
-                },
-            )
-
-    resvg = subprocess.run(
-        "resvg --resources-dir . --zoom 2 - -c",
-        shell=True,
-        input=ET.tostring(svg),
-        capture_output=True,
-    )
-
-    image = Image.open(io.BytesIO(resvg.stdout), formats=[
-                       "PNG"]).quantize(64, dither=0)
+    image = image.convert("RGBA")
+    draw = ImageDraw.Draw(image, "RGBA")
 
     print(f"sprites/crazyhouse-{piece_set_name}.gif")
 
-    image.save(
-        f"sprites/crazyhouse-{piece_set_name}.gif", optimize=True, interlace=False
-    )
+    return image.quantize(64, dither=0)
