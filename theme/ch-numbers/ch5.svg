@@ -2,67 +2,35 @@
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
 
 <svg
-   width="500mm"
-   height="500mm"
-   viewBox="0 0 500 500"
+   width="32"
+   height="32"
+   viewBox="0 0 32 32"
    version="1.1"
    id="svg1"
-   sodipodi:docname="ch2.svg"
-   inkscape:version="1.3 (0e150ed6c4, 2023-07-21)"
-   inkscape:export-filename="ch4.svg"
-   inkscape:export-xdpi="48.689999"
-   inkscape:export-ydpi="48.689999"
-   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns="http://www.w3.org/2000/svg"
    xmlns:svg="http://www.w3.org/2000/svg">
-  <sodipodi:namedview
-     id="namedview1"
-     pagecolor="#ff6600"
-     bordercolor="#000000"
-     borderopacity="0.25"
-     inkscape:showpageshadow="2"
-     inkscape:pageopacity="0.0"
-     inkscape:pagecheckerboard="0"
-     inkscape:deskcolor="#d1d1d1"
-     inkscape:document-units="mm"
-     inkscape:zoom="0.25"
-     inkscape:cx="422"
-     inkscape:cy="990"
-     inkscape:window-width="1920"
-     inkscape:window-height="991"
-     inkscape:window-x="-9"
-     inkscape:window-y="-9"
-     inkscape:window-maximized="1"
-     inkscape:current-layer="layer1"
-     inkscape:export-bgcolor="#ff6600ff" />
   <defs
-     id="defs1">
-    <rect
-       x="388"
-       y="520"
-       width="972"
-       height="808"
-       id="rect7" />
-  </defs>
+     id="defs1" />
   <g
-     inkscape:label="Layer 1"
-     inkscape:groupmode="layer"
      id="layer1">
     <rect
-       style="fill:#ff7f2a;stroke-width:0.26319"
+       style="fill:#d64f00;fill-opacity:1;stroke-width:1.00124"
        id="rect1"
-       width="498.47501"
-       height="500.59167"
-       x="1.0583292"
-       y="-1.4210855e-14" />
+       width="32"
+       height="31.960348"
+       x="0"
+       y="0.039653037"
+       ry="0" />
     <text
        xml:space="preserve"
-       transform="matrix(6.6651191,0,0,4.7340388,-2584.8224,-2561.7987)"
-       id="text7"
-       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:136.063px;font-family:Arial;-inkscape-font-specification:'Arial, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;white-space:pre;shape-inside:url(#rect7);display:inline;fill:#f9f9f9"><tspan
-         x="388"
-         y="642.55935"
-         id="tspan2">5</tspan></text>
+       style="font-weight:bold;font-size:37.3883px;font-family:Arial;-inkscape-font-specification:'Arial, Bold';text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#ffffff;fill-opacity:1;stroke-width:3.73883"
+       x="2.4894176"
+       y="33.449982"
+       id="text1"
+       transform="scale(1.259055,0.79424647)"><tspan
+         id="tspan1"
+         x="2.4894176"
+         y="33.449982"
+         style="stroke-width:3.73883">5</tspan></text>
   </g>
 </svg>
